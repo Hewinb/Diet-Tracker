@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carb Cycling · Fat-Loss Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1115; --panel:#171A20; --panel2:#1F232B; --line:#2A2F3A;
+    --ink:#ECEEF1; --muted:#949BA7; --faint:#6B7280;
+    --low:#6E8BFF; --high:#FF8A4C;
+    --p:#FB6F92; --c:#FBBF24; --f:#2DD4BF;
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;line-height:1.5;padding-bottom:48px}
+  .app{max-width:760px;margin:0 auto;position:relative}
+
+  header.head{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.92);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .head-inner{padding:12px 16px 0}
+  .brandline{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .eyebrow{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted)}
+  .eyebrow b{color:var(--high)}
+  h1.title{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em;margin:2px 0 0}
+  .wk-meta{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap;text-align:right}
+  .wk-meta b{color:var(--muted);font-weight:500}
+
+  .scaler{margin-top:11px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center}
+  .scaler .lab{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .scaler input[type=range]{width:100%;accent-color:#8A98BD;height:22px;cursor:pointer}
+  .scaler .val{font-family:var(--display);font-weight:800;font-size:16px;min-width:80px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .scaler .val span{font-size:11px;color:var(--muted);font-weight:600}
+  .scaler .sub{grid-column:1 / -1;margin-top:-2px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .scaler .sub b{color:var(--muted);font-weight:500}
+
+  nav.tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    padding:7px 9px 6px;min-width:50px;cursor:pointer;color:var(--muted);position:relative;
+    display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--display);
+    transition:border-color .15s,background .15s,color .15s}
+  .tab:focus-visible{outline:2px solid var(--low);outline-offset:2px}
+  .tab .d{font-weight:700;font-size:12px;letter-spacing:.06em}
+  .tab .wave{width:22px;height:18px;display:flex;align-items:flex-end;justify-content:center}
+  .tab .wave i{display:block;width:7px;border-radius:2px;background:var(--line);transition:height .2s,background .2s}
+  .tab.low.on{color:var(--low);border-color:var(--low);background:#171d2e}
+  .tab.high.on{color:var(--high);border-color:var(--high);background:#241a13}
+  .tab.low.on .wave i{background:var(--low)}
+  .tab.high.on .wave i{background:var(--high)}
+  .tab.util{justify-content:center;min-width:54px;font-weight:700;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;padding-top:0;padding-bottom:0}
+  .tab.util.on{color:var(--ink);border-color:var(--ink);background:var(--panel2)}
+
+  main{padding:18px 16px 0}
+
+  .dayhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .dayhead .dn{font-family:var(--display);font-weight:900;font-size:30px;letter-spacing:-.02em;line-height:1}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;flex:0 0 auto}
+  .seg button{all:unset;padding:9px 15px;font-family:var(--display);font-weight:800;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button:focus-visible{outline:2px solid var(--low);outline-offset:-2px}
+  .seg button.on.low{color:var(--low);background:#171d2e}
+  .seg button.on.high{color:var(--high);background:#241a13}
+
+  .badge{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    padding:6px 11px;border-radius:99px;color:var(--muted);background:var(--panel2);border:1px solid var(--line)}
+
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin-bottom:16px;
+    position:relative;overflow:hidden}
+  .hero .edge{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .hero.low .edge{background:linear-gradient(var(--low),#3550b8)}
+  .hero.high .edge{background:linear-gradient(var(--high),#c45a23)}
+  .hero .blurb{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .hero .blurb b{color:var(--ink);font-weight:600}
+  .kcal{display:flex;align-items:baseline;gap:9px;margin-bottom:14px}
+  .kcal .big{font-family:var(--display);font-weight:900;font-size:46px;letter-spacing:-.03em;line-height:.9;
+    font-variant-numeric:tabular-nums}
+  .kcal .unit{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+
+  .splitbar{height:12px;border-radius:7px;overflow:hidden;display:flex;background:var(--panel2);margin-bottom:12px}
+  .splitbar i{height:100%}
+  .splitbar .sp{background:var(--p)} .splitbar .sc{background:var(--c)} .splitbar .sf{background:var(--f)}
+
+  .legend{display:flex;gap:7px}
+  .leg{flex:1;background:var(--panel2);border-radius:11px;padding:9px 10px}
+  .leg .k{display:flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:10px;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .leg .k em{width:8px;height:8px;border-radius:3px;font-style:normal}
+  .leg.p .k em{background:var(--p)} .leg.c .k em{background:var(--c)} .leg.f .k em{background:var(--f)}
+  .leg .g{font-family:var(--mono);font-weight:700;font-size:18px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .leg .g small{font-size:11px;color:var(--faint);font-weight:400}
+
+  .mealctl{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 9px}
+  .mealctl .h{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .toggleall{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--ink);
+    background:none;border:1px solid var(--line);border-radius:9px;padding:5px 10px;cursor:pointer}
+  .toggleall:hover{border-color:var(--muted)}
+
+  .meal{background:var(--panel);border:1px solid var(--line);border-radius:15px;margin-bottom:9px;overflow:hidden}
+  .meal>button{all:unset;display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;cursor:pointer;box-sizing:border-box}
+  .meal>button:focus-visible{outline:2px solid var(--low);outline-offset:-2px}
+  .meal .nm{font-family:var(--display);font-weight:800;font-size:14.5px;letter-spacing:.01em;flex:1;min-width:0}
+  .meal .mk{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .meal .pcf{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap;display:flex;gap:7px}
+  .meal .pcf .dp{color:var(--p)} .meal .pcf .dc{color:var(--c)} .meal .pcf .df{color:var(--f)}
+  .chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:rotate(45deg);transition:transform .2s;margin-left:2px;flex:0 0 auto}
+  .meal.open .chev{transform:rotate(225deg)}
+  .meal .body{display:none;padding:0 15px 6px;border-top:1px solid var(--line)}
+  .meal.open .body{display:block}
+  .item{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid #21252e}
+  .item:last-child{border-bottom:none}
+  .item .il{flex:1;min-width:0}
+  .item .iname{font-size:13px;color:var(--ink)}
+  .item .iqty{font-family:var(--mono);font-size:11px;color:var(--high);margin-top:1px}
+  .item.low .iqty{color:var(--low)}
+  .item .im{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:right;white-space:nowrap;line-height:1.7}
+  .item .im b{color:var(--muted);font-weight:500}
+
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:6px 16px}
+  .shoprow{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #21252e}
+  .shoprow:last-child{border-bottom:none}
+  .shoprow input{width:20px;height:20px;accent-color:var(--high);flex:0 0 auto;cursor:pointer}
+  .shoprow .sn{flex:1;font-size:14px}
+  .shoprow .sq{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+  .shoprow.done .sn,.shoprow.done .sq{color:var(--faint);text-decoration:line-through}
+  .sheet .note{font-size:12px;color:var(--muted);padding:14px 0 12px;line-height:1.55}
+  .sheet .note b{color:var(--ink)}
+
+  .gcard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px 16px;margin-bottom:10px}
+  .gcard h3{font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:.01em;margin:0 0 6px;display:flex;align-items:center;gap:9px}
+  .gcard h3 em{font-style:normal;font-size:11px;font-family:var(--mono);font-weight:700;padding:2px 7px;border-radius:6px}
+  .gcard.warn h3 em{background:#241a13;color:var(--high)}
+  .gcard.info h3 em{background:#171d2e;color:var(--low)}
+  .gcard p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+  .gcard p+p{margin-top:8px}
+  .gcard b{color:var(--ink);font-weight:600}
+
+  .foot{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;padding:22px 16px 4px;line-height:1.7}
+
+  .reveal{animation:rise .4s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:420px){
+    .kcal .big{font-size:40px}.dayhead .dn{font-size:25px}.leg .g{font-size:16px}
+    .seg button{padding:9px 12px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="head-inner">
+      <div class="brandline">
+        <div>
+          <div class="eyebrow">Carb Cycling <b>·</b> Fat Loss</div>
+          <h1 class="title">The Seven-Day Split</h1>
+        </div>
+        <div class="wk-meta" id="wkMeta"></div>
+      </div>
+      <div class="scaler">
+        <span class="lab">Bodyweight</span>
+        <input type="range" id="wt" min="150" max="240" step="1" value="200" aria-label="Bodyweight in pounds">
+        <span class="val" id="wtVal">200<span> lb</span></span>
+        <div class="sub" id="scaleSub"></div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Days and sections"></nav>
+  </header>
+  <main id="main"></main>
+  <div class="foot">Sedentary baseline · 200&nbsp;lb · lifting 4&times;/wk.<br>Tap any day to flip it Low or High. Macros are estimates — weigh as you go.</div>
+</div>
+
+<script>
+/* ---- macro database (per 100 g/ml, or per unit) ---- */
+const F = {
+  mince5:{u:100,kcal:137,p:21,c:0,f:5},
+  yogurt:{u:100,kcal:56,p:10,c:4,f:0},
+  milk:{u:100,unit:'ml',kcal:47,p:3.4,c:4.8,f:1.7},
+  redleic:{u:100,kcal:407,p:25,c:0.3,f:32.3},
+  feta:{u:100,kcal:260,p:14,c:1.5,f:22},
+  cashew:{u:100,kcal:600,p:18,c:30,f:47.7},
+  almond:{u:100,kcal:620,p:21,c:8.3,f:53.3},
+  baconmayo:{u:100,kcal:461,p:1.5,c:5,f:48},
+  hoops:{u:100,kcal:350,p:24.7,c:56,f:3},
+  mateys:{u:100,kcal:390,p:7,c:83,f:3.5},
+  wrap:{unit:'x',kcal:179,p:9.8,c:30,f:2.3},
+  bagel:{unit:'x',kcal:232,p:8,c:46,f:2},
+  babybel:{unit:'x',kcal:50,p:5.5,c:0,f:3},
+};
+
+/* ---- templates (sedentary 200 lb fat-loss portions) ---- */
+const T = {
+  lowA:{label:'Low',type:'low',blurb:'Fat-fuelled, carbs stripped to the floor.',meals:[
+    {n:'Breakfast',items:[['yogurt',350,'Greek 0% yogurt'],['hoops',30,'Protein Hoops'],['milk',150,'Lactose-free milk · in coffee'],['babybel',1,'Babybel Light']]},
+    {n:'Lunch',items:[['mince5',230,'5% beef mince'],['redleic',25,'Red Leicester, grated']]},
+    {n:'Dinner',items:[['mince5',230,'5% beef mince'],['feta',30,'Greek-style salad cheese'],['baconmayo',10,'Bacon mayo']]},
+    {n:'Snack',items:[['yogurt',150,'Greek 0% yogurt'],['almond',15,'Almonds'],['babybel',1,'Babybel Light']]},
+  ]},
+  lowB:{label:'Low',type:'low',blurb:'Fat-fuelled, a touch more food across the day.',meals:[
+    {n:'Breakfast',items:[['yogurt',300,'Greek 0% yogurt'],['hoops',35,'Protein Hoops'],['cashew',12,'Cashews'],['milk',150,'Lactose-free milk · in coffee']]},
+    {n:'Lunch',items:[['mince5',250,'5% beef mince'],['feta',30,'Greek-style salad cheese'],['baconmayo',10,'Bacon mayo']]},
+    {n:'Dinner',items:[['mince5',230,'5% beef mince'],['redleic',30,'Red Leicester, grated'],['baconmayo',8,'Bacon mayo']]},
+    {n:'Snack',items:[['yogurt',200,'Greek 0% yogurt'],['babybel',2,'Babybel Light']]},
+  ]},
+  high:{label:'High',type:'high',blurb:'Carb-loaded, fat pulled right back. Put this on a lifting day.',meals:[
+    {n:'Breakfast',items:[['bagel',2,'Cinnamon & raisin bagel'],['yogurt',250,'Greek 0% yogurt'],['milk',150,'Lactose-free milk']]},
+    {n:'Lunch',items:[['wrap',2,'High-protein wrap'],['mince5',200,'5% beef mince']]},
+    {n:'Dinner',items:[['mince5',220,'5% beef mince'],['bagel',1,'Bagel · sliced as a bun'],['feta',25,'Greek-style salad cheese']]},
+    {n:'Snack',items:[['yogurt',200,'Greek 0% yogurt'],['mateys',40,'Marshmallow Mateys']]},
+  ]},
+};
+
+const DAYS = [
+  {day:'Monday',ab:'MON'},{day:'Tuesday',ab:'TUE'},{day:'Wednesday',ab:'WED'},
+  {day:'Thursday',ab:'THU'},{day:'Friday',ab:'FRI'},{day:'Saturday',ab:'SAT'},{day:'Sunday',ab:'SUN'},
+];
+
+/* ---- state ---- */
+const BASE_LB = 200;
+let weight = 200;                                  // lb
+let dayTypes = ['low','low','low','high','low','high','low'];  // default: Thu + Sat high
+let active = (()=>{ const g=new Date().getDay(); return g===0?6:g-1; })();
+let view = 'day';
+const open = new Set();
+const checked = new Set();
+
+const k = ()=> weight/BASE_LB;
+const r5 = x => Math.round(x/5)*5;
+const rHalf = x => Math.round(x*2)/2;
+const fmt = n => Math.round(n).toLocaleString('en-GB');
+
+/* resolve a day index to a concrete template + low variant letter */
+function resolve(idx){
+  if(dayTypes[idx]==='high') return {key:'high',variant:null};
+  let order=0; for(let i=0;i<=idx;i++) if(dayTypes[i]==='low') order++;
+  const isA = order%2===1;
+  return {key:isA?'lowA':'lowB', variant:isA?'A':'B'};
+}
+
+function im(food, qty){
+  const d=F[food], s=k();
+  if(d.unit==='x'){ const n=qty*s; return {kcal:d.kcal*n,p:d.p*n,c:d.c*n,f:d.f*n,qtyN:n,unit:'x'}; }
+  const g=qty*s, fac=g/100;
+  return {kcal:d.kcal*fac,p:d.p*fac,c:d.c*fac,f:d.f*fac,qtyN:g,unit:d.unit||'g'};
+}
+function mealTotal(meal){const t={kcal:0,p:0,c:0,f:0};meal.items.forEach(([fo,q])=>{const m=im(fo,q);t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.f+=m.f;});return t;}
+function dayTotal(idx){const t={kcal:0,p:0,c:0,f:0};T[resolve(idx).key].meals.forEach(me=>{const m=mealTotal(me);t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.f+=m.f;});return t;}
+function weekAvg(){let kc=0,p=0;DAYS.forEach((_,i)=>{const d=dayTotal(i);kc+=d.kcal;p+=d.p;});return{kcal:kc/7,p:p/7};}
+function counts(){const lo=dayTypes.filter(t=>t==='low').length;return{lo,hi:7-lo};}
+function maxCarb(){let m=0;DAYS.forEach((_,i)=>{m=Math.max(m,dayTotal(i).c);});return m||1;}
+
+/* ---- render ---- */
+function renderMeta(){
+  const c=counts();
+  document.getElementById('wkMeta').innerHTML=`<b>${c.lo}</b> low · <b>${c.hi}</b> high`;
+}
+function renderScaleSub(){
+  const a=weekAvg(), kg=Math.round(weight/2.2046);
+  document.getElementById('scaleSub').innerHTML=
+    `${kg} kg · week avg <b>${fmt(a.kcal)}</b> kcal · <b>${(a.p/(weight/2.2046)).toFixed(1)}</b> g/kg protein`;
+}
+function renderTabs(){
+  const el=document.getElementById('tabs'); el.innerHTML=''; const mc=maxCarb();
+  DAYS.forEach((w,i)=>{
+    const t=dayTypes[i], d=dayTotal(i), h=6+Math.round((d.c/mc)*12);
+    const b=document.createElement('button');
+    b.className=`tab ${t}${view==='day'&&i===active?' on':''}`;
+    b.innerHTML=`<span class="d">${w.ab}</span><span class="wave"><i style="height:${h}px"></i></span>`;
+    b.setAttribute('aria-label',`${w.day}, currently ${t} day`);
+    b.onclick=()=>{view='day';active=i;render();};
+    el.appendChild(b);
+  });
+  [['shop','Shop'],['guide','Guide']].forEach(([v,lab])=>{
+    const b=document.createElement('button');
+    b.className=`tab util${view===v?' on':''}`; b.textContent=lab;
+    b.onclick=()=>{view=v;render();}; el.appendChild(b);
+  });
+}
+
+function renderDay(){
+  const w=DAYS[active], r=resolve(active), tpl=T[r.key], t=dayTypes[active], d=dayTotal(active);
+  const pc=d.p*4, cc=d.c*4, fc=d.f*9, tot=pc+cc+fc||1;
+  const vlabel = r.variant ? `Variant ${r.variant}. ` : '';
+
+  const meals = tpl.meals.map(me=>{
+    const key=`${r.key}-${me.n}`, isOpen=open.has(key), mt=mealTotal(me);
+    const items=me.items.map(([fo,q,lab])=>{
+      const m=im(fo,q);
+      const qs=m.unit==='x'?`&times; ${rHalf(m.qtyN)}`:`${r5(m.qtyN)}${m.unit}`;
+      return `<div class="item ${t}"><div class="il"><div class="iname">${lab}</div><div class="iqty">${qs}</div></div>
+        <div class="im"><b>${fmt(m.kcal)}</b> kcal<br>P${Math.round(m.p)} C${Math.round(m.c)} F${Math.round(m.f)}</div></div>`;
+    }).join('');
+    return `<div class="meal ${isOpen?'open':''}"><button data-key="${key}" aria-expanded="${isOpen}">
+        <span class="nm">${me.n}</span>
+        <span class="pcf"><span class="dp">P${Math.round(mt.p)}</span><span class="dc">C${Math.round(mt.c)}</span><span class="df">F${Math.round(mt.f)}</span></span>
+        <span class="mk">${fmt(mt.kcal)}</span><span class="chev"></span></button>
+      <div class="body">${items}</div></div>`;
+  }).join('');
+  const allOpen=tpl.meals.every(me=>open.has(`${r.key}-${me.n}`));
+
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead">
+      <div class="dn">${w.day}</div>
+      <div class="seg" role="group" aria-label="Set day type">
+        <button class="${t==='low'?'on low':''}" data-set="low">Low</button>
+        <button class="${t==='high'?'on high':''}" data-set="high">High</button>
+      </div>
+    </div>
+    <section class="hero ${t}"><div class="edge"></div>
+      <p class="blurb">${vlabel}${tpl.blurb}</p>
+      <div class="kcal"><span class="big">${fmt(d.kcal)}</span><span class="unit">kcal</span></div>
+      <div class="splitbar"><i class="sp" style="width:${pc/tot*100}%"></i><i class="sc" style="width:${cc/tot*100}%"></i><i class="sf" style="width:${fc/tot*100}%"></i></div>
+      <div class="legend">
+        <div class="leg p"><div class="k"><em></em>Protein</div><div class="g">${Math.round(d.p)}<small>g</small></div></div>
+        <div class="leg c"><div class="k"><em></em>Carbs</div><div class="g">${Math.round(d.c)}<small>g</small></div></div>
+        <div class="leg f"><div class="k"><em></em>Fat</div><div class="g">${Math.round(d.f)}<small>g</small></div></div>
+      </div>
+    </section>
+    <div class="mealctl"><span class="h">Meals</span><button class="toggleall" id="toggleAll">${allOpen?'Collapse all':'Expand all'}</button></div>
+    ${meals}
+   </div>`;
+
+  document.querySelectorAll('.seg button').forEach(b=>{
+    b.onclick=()=>{ dayTypes[active]=b.dataset.set; render(); };
+  });
+  document.querySelectorAll('.meal > button').forEach(b=>{
+    b.onclick=()=>{const key=b.dataset.key;open.has(key)?open.delete(key):open.add(key);renderDay();};
+  });
+  document.getElementById('toggleAll').onclick=()=>{
+    if(allOpen) tpl.meals.forEach(me=>open.delete(`${r.key}-${me.n}`));
+    else tpl.meals.forEach(me=>open.add(`${r.key}-${me.n}`));
+    renderDay();
+  };
+}
+
+const SHOP_LABEL={mince5:'Lean 5% beef mince',yogurt:'Greek 0% yogurt',milk:'Lactose-free milk',
+  redleic:'Red Leicester (grated)',feta:'Greek-style salad cheese',cashew:'Cashews',almond:'Almonds',
+  baconmayo:'Bacon mayo',hoops:'Protein Hoops',mateys:'Marshmallow Mateys',wrap:'High-protein wraps',
+  bagel:'Cinnamon & raisin bagels',babybel:'Babybel Light'};
+const SHOP_ORDER=['mince5','yogurt','milk','bagel','wrap','redleic','feta','baconmayo','hoops','mateys','almond','cashew','babybel'];
+
+function weeklyTally(){
+  const acc={};
+  DAYS.forEach((_,i)=>{ T[resolve(i).key].meals.forEach(me=>me.items.forEach(([fo,q])=>{
+    if(!acc[fo]) acc[fo]={unit:F[fo].unit==='x'?'x':(F[fo].unit||'g'),q:0};
+    acc[fo].q+=q;
+  })); });
+  return acc;
+}
+function renderShop(){
+  const a=weeklyTally(), s=k(), c=counts();
+  const rows=SHOP_ORDER.map(fo=>{
+    const it=a[fo]; if(!it) return '';
+    const q=it.q*s; let disp;
+    if(it.unit==='x') disp=`${Math.round(q)} pcs`;
+    else if(it.unit==='ml') disp=q>=1000?`${(q/1000).toFixed(1)} L`:`${r5(q)} ml`;
+    else disp=q>=1000?`${(q/1000).toFixed(2)} kg`:`${r5(q)} g`;
+    return `<label class="shoprow ${checked.has(fo)?'done':''}"><input type="checkbox" data-fo="${fo}" ${checked.has(fo)?'checked':''}>
+      <span class="sn">${SHOP_LABEL[fo]}</span><span class="sq">${disp}</span></label>`;
+  }).join('');
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead"><div class="dn">Shopping</div><div class="badge">one week</div></div>
+    <section class="sheet">
+      <div class="note">Totals for your current week — <b>${c.lo} low</b> + <b>${c.hi} high</b> — scaled to <b>${weight} lb</b>. Changes as you flip days. Tick as you go.</div>
+      ${rows}
+    </section>
+   </div>`;
+  document.querySelectorAll('.shoprow input').forEach(ch=>{
+    ch.onchange=()=>{const fo=ch.dataset.fo;ch.checked?checked.add(fo):checked.delete(fo);
+      ch.closest('.shoprow').classList.toggle('done',ch.checked);};
+  });
+}
+
+function renderGuide(){
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead"><div class="dn">Guide</div></div>
+    <div class="gcard info"><h3><em>BASIS</em>The numbers</h3>
+      <p>Built for a <b>200 lb sedentary</b> day (desk job) who <b>lifts 4&times;/week</b>. Maintenance is taken conservatively at ~2,200 kcal so the deficit is real — office NEAT is low, so it's safer to under-claim your burn.</p>
+      <p>Default week averages ~<b>1,720 kcal/day</b>: a ~480 kcal deficit, roughly <b>1 lb/week</b>. Protein sits near <b>2.0–2.1 g/kg</b> every day to hold muscle in the cut.</p></div>
+    <div class="gcard info"><h3><em>PICK</em>Choose your days</h3>
+      <p>Open any day and hit <b>Low</b> or <b>High</b>. Stack your <b>2 high days onto your 2 hardest lifts</b> — leg day, heaviest push. Low days fill the rest. The week strip recolours and the carb wave updates so you can see the rhythm.</p>
+      <p>Add more high days if you want, but each one shrinks the weekly deficit — watch the <b>week avg</b> readout up top.</p></div>
+    <div class="gcard warn"><h3><em>FIX</em>Add vegetables</h3>
+      <p>As built there's almost no fibre or micronutrients. Throw <b>unlimited non-starchy veg</b> into lunch and dinner every day — spinach, peppers, onion, tomato, cucumber, leaves, courgette. Calories are negligible and it fixes fullness and digestion.</p></div>
+    <div class="gcard warn"><h3><em>WATCH</em>Salt &amp; water</h3>
+      <p>Cheese, mayo and salad cheese push salt high — fine if your BP's normal, just don't add more.</p>
+      <p>Low-carb + high-protein is dehydrating. <b>Push water on low days</b> so you don't go flat.</p></div>
+    <div class="gcard info"><h3><em>SCALE</em>As you lean down</h3>
+      <p>The slider scales every portion from the <b>200 lb</b> baseline. As you drop weight your maintenance drops too — <b>nudge the slider down</b> to keep the deficit honest.</p>
+      <p>Losing faster than ~1.5 lb/week for weeks, or lifts/energy tanking? Drag it up a few lb. The rule stays: keep <b>protein ~2 g/kg</b> and let carbs be the only dial between low and high.</p></div>
+   </div>`;
+}
+
+function render(){
+  renderTabs(); renderMeta(); renderScaleSub();
+  if(view==='day') renderDay(); else if(view==='shop') renderShop(); else renderGuide();
+}
+
+/* ---- events ---- */
+const wtInput=document.getElementById('wt'), wtVal=document.getElementById('wtVal');
+wtInput.addEventListener('input',()=>{
+  weight=+wtInput.value; wtVal.innerHTML=`${weight}<span> lb</span>`;
+  renderScaleSub();
+  if(view==='day') renderDay(); else if(view==='shop') renderShop();
+  const mc=maxCarb();
+  document.querySelectorAll('#tabs .tab').forEach((b,i)=>{ if(i<DAYS.length){
+    const bar=b.querySelector('.wave i'); if(bar) bar.style.height=(6+Math.round((dayTotal(i).c/mc)*12))+'px'; }});
+});
+
+render();
+</script>
+</body>
+</html>
