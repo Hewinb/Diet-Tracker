@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carb Cycling · Fat-Loss Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1115; --panel:#171A20; --panel2:#1F232B; --line:#2A2F3A;
+    --ink:#ECEEF1; --muted:#949BA7; --faint:#6B7280;
+    --low:#6E8BFF; --high:#FF8A4C; --gym:#34D399;
+    --p:#FB6F92; --c:#FBBF24; --f:#2DD4BF;
+    --display:'Archivo',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;line-height:1.5;padding-bottom:48px}
+  .app{max-width:760px;margin:0 auto;position:relative}
+
+  header.head{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .head-inner{padding:12px 16px 0}
+  .brandline{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .eyebrow{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .eyebrow b{color:var(--high)}
+  h1.title{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em;margin:2px 0 0}
+  .wk-meta{font-family:var(--mono);font-size:10.5px;color:var(--faint);white-space:nowrap;text-align:right;line-height:1.5}
+  .wk-meta b{color:var(--muted);font-weight:500}
+
+  .scaler{margin-top:11px;display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center}
+  .scaler+.scaler{margin-top:9px;padding-top:10px;border-top:1px solid var(--line)}
+  .scaler .lab{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .scaler input[type=range]{width:100%;accent-color:#8A98BD;height:22px;cursor:pointer}
+  .scaler input#calAdj{accent-color:var(--high)}
+  .scaler .val{font-family:var(--display);font-weight:800;font-size:16px;min-width:88px;text-align:right;font-variant-numeric:tabular-nums}
+  .scaler .val span{font-size:11px;color:var(--muted);font-weight:600}
+  .scaler .sub{grid-column:1 / -1;margin-top:-1px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .scaler .sub b{color:var(--muted);font-weight:500}
+
+  nav.tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:7px 9px 5px;min-width:50px;cursor:pointer;color:var(--muted);position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--display);transition:border-color .15s,background .15s,color .15s}
+  .tab:focus-visible{outline:2px solid var(--low);outline-offset:2px}
+  .tab .d{font-weight:700;font-size:12px;letter-spacing:.06em}
+  .tab .wave{width:22px;height:16px;display:flex;align-items:flex-end;justify-content:center}
+  .tab .wave i{display:block;width:7px;border-radius:2px;background:var(--line);transition:height .2s,background .2s}
+  .tab .wkdot{width:5px;height:5px;border-radius:50%;background:transparent;transition:background .2s}
+  .tab.wo .wkdot{background:var(--gym)}
+  .tab.low.on{color:var(--low);border-color:var(--low);background:#171d2e}
+  .tab.high.on{color:var(--high);border-color:var(--high);background:#241a13}
+  .tab.low.on .wave i{background:var(--low)} .tab.high.on .wave i{background:var(--high)}
+  .tab.util{justify-content:center;min-width:54px;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:0;padding-bottom:0}
+  .tab.util.on{color:var(--ink);border-color:var(--ink);background:var(--panel2)}
+
+  main{padding:18px 16px 0}
+  .dayhead{margin-bottom:14px}
+  .dayhead .dn{font-family:var(--display);font-weight:900;font-size:30px;letter-spacing:-.02em;line-height:1}
+  .daytoggles{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;flex:0 0 auto}
+  .seg button{all:unset;padding:8px 14px;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button:focus-visible{outline:2px solid var(--low);outline-offset:-2px}
+  .seg button.on.low{color:var(--low);background:#171d2e}
+  .seg button.on.high{color:var(--high);background:#241a13}
+  .seg button.on.rest{color:var(--ink);background:var(--panel2)}
+  .seg button.on.gym{color:var(--gym);background:#13241d}
+
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin:14px 0 16px;position:relative;overflow:hidden}
+  .hero .edge{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .hero.low .edge{background:linear-gradient(var(--low),#3550b8)} .hero.high .edge{background:linear-gradient(var(--high),#c45a23)}
+  .hero .tags{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .htag{font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;border-radius:99px}
+  .htag.low{color:var(--low);background:#171d2e;border:1px solid #2c3a63} .htag.high{color:var(--high);background:#241a13;border:1px solid #5e3a1f}
+  .htag.gym{color:var(--gym);background:#13241d;border:1px solid #1f5040} .htag.rest{color:var(--muted);background:var(--panel2);border:1px solid var(--line)}
+  .hero .blurb{font-size:12.5px;color:var(--muted);margin:0 0 12px} .hero .blurb b{color:var(--ink);font-weight:600}
+  .kcal{display:flex;align-items:baseline;gap:9px;margin-bottom:14px}
+  .kcal .big{font-family:var(--display);font-weight:900;font-size:46px;letter-spacing:-.03em;line-height:.9;font-variant-numeric:tabular-nums}
+  .kcal .unit{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+  .splitbar{height:12px;border-radius:7px;overflow:hidden;display:flex;background:var(--panel2);margin-bottom:12px}
+  .splitbar i{height:100%} .splitbar .sp{background:var(--p)} .splitbar .sc{background:var(--c)} .splitbar .sf{background:var(--f)}
+  .legend{display:flex;gap:7px}
+  .leg{flex:1;background:var(--panel2);border-radius:11px;padding:9px 10px}
+  .leg .k{display:flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .leg .k em{width:8px;height:8px;border-radius:3px;font-style:normal}
+  .leg.p .k em{background:var(--p)} .leg.c .k em{background:var(--c)} .leg.f .k em{background:var(--f)}
+  .leg .g{font-family:var(--mono);font-weight:700;font-size:18px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .leg .g small{font-size:11px;color:var(--faint);font-weight:400}
+
+  .mealctl{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 9px}
+  .mealctl .h{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .toggleall{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--ink);background:none;border:1px solid var(--line);border-radius:9px;padding:5px 10px;cursor:pointer}
+  .toggleall:hover{border-color:var(--muted)}
+
+  .meal{background:var(--panel);border:1px solid var(--line);border-radius:15px;margin-bottom:9px;overflow:hidden}
+  .meal.wo{border-color:#26402f}
+  .meal>button{all:unset;display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;cursor:pointer;box-sizing:border-box}
+  .meal>button:focus-visible{outline:2px solid var(--low);outline-offset:-2px}
+  .meal .nm{font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:.01em;flex:1;min-width:0}
+  .meal .nm .time{font-family:var(--mono);font-weight:400;font-size:9.5px;color:var(--faint);letter-spacing:0;margin-left:5px}
+  .meal .nm .dish{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted);letter-spacing:0;margin-top:2px;white-space:normal}
+  .meal .nm .wob{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;color:var(--gym);border:1px solid #1f5040;background:#13241d;border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;letter-spacing:.05em}
+  .meal .mk{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .meal .pcf{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap;display:flex;gap:7px}
+  .meal .pcf .dp{color:var(--p)} .meal .pcf .dc{color:var(--c)} .meal .pcf .df{color:var(--f)}
+  .chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-left:2px;flex:0 0 auto}
+  .meal.open .chev{transform:rotate(225deg)}
+  .meal .body{display:none;padding:0 15px 6px;border-top:1px solid var(--line)} .meal.open .body{display:block}
+  .item{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid #21252e} .item:last-child{border-bottom:none}
+  .item .il{flex:1;min-width:0} .item .iname{font-size:13px;color:var(--ink)}
+  .item .iqty{font-family:var(--mono);font-size:11px;color:var(--high);margin-top:1px} .item.low .iqty{color:var(--low)}
+  .item .im{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:right;white-space:nowrap;line-height:1.7} .item .im b{color:var(--muted);font-weight:500}
+
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:6px 16px}
+  .shoprow{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #21252e} .shoprow:last-child{border-bottom:none}
+  .shoprow input{width:20px;height:20px;accent-color:var(--high);flex:0 0 auto;cursor:pointer}
+  .shoprow .sn{flex:1;font-size:14px} .shoprow .sq{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+  .shoprow.done .sn,.shoprow.done .sq{color:var(--faint);text-decoration:line-through}
+  .sheet .note{font-size:12px;color:var(--muted);padding:14px 0 12px;line-height:1.55} .sheet .note b{color:var(--ink)}
+
+  .gcard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px 16px;margin-bottom:10px}
+  .gcard h3{font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:.01em;margin:0 0 6px;display:flex;align-items:center;gap:9px}
+  .gcard h3 em{font-style:normal;font-size:11px;font-family:var(--mono);font-weight:700;padding:2px 7px;border-radius:6px}
+  .gcard.warn h3 em{background:#241a13;color:var(--high)} .gcard.info h3 em{background:#171d2e;color:var(--low)} .gcard.gymc h3 em{background:#13241d;color:var(--gym)}
+  .gcard p{margin:0;font-size:13px;color:var(--muted);line-height:1.6} .gcard p+p{margin-top:8px} .gcard b{color:var(--ink);font-weight:600}
+
+  .foot{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;padding:22px 16px 4px;line-height:1.7}
+  .reveal{animation:rise .4s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:420px){.kcal .big{font-size:40px}.dayhead .dn{font-size:25px}.leg .g{font-size:16px}.seg button{padding:8px 11px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="head-inner">
+      <div class="brandline">
+        <div><div class="eyebrow">Carb Cycling <b>·</b> Fat Loss</div><h1 class="title">The Seven-Day Split</h1></div>
+        <div class="wk-meta" id="wkMeta"></div>
+      </div>
+      <div class="scaler">
+        <span class="lab">Bodyweight</span>
+        <input type="range" id="wt" min="150" max="240" step="1" value="200" aria-label="Bodyweight in pounds">
+        <span class="val" id="wtVal">200<span> lb</span></span>
+        <div class="sub" id="scaleSub"></div>
+      </div>
+      <div class="scaler">
+        <span class="lab">Calorie target</span>
+        <input type="range" id="calAdj" min="-3" max="3" step="1" value="0" aria-label="Calorie adjustment in ten percent steps">
+        <span class="val" id="calAdjVal">Baseline<span></span></span>
+        <div class="sub" id="calAdjSub"></div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Days and sections"></nav>
+  </header>
+  <main id="main"></main>
+  <div class="foot">Your plan · sedentary 200&nbsp;lb · lifting 4&times;/wk.<br>Each day toggles Low/High and Rest/Workout. Workout days add pre &amp; post-workout meals.</div>
+</div>
+
+<script>
+/* ---- macro database (per 100 g/ml, or per unit). Beef-XP is per 100g: 30g scoop = 114/27.2/0.7/0.5 ---- */
+const F = {
+  mince5:{u:100,kcal:137,p:21,c:0,f:5},
+  surreal:{u:100,kcal:382,p:39,c:32,f:11},
+  yogurt:{u:100,kcal:56,p:10,c:4,f:0},
+  milk:{u:100,unit:'ml',kcal:47,p:3.4,c:4.8,f:1.7},
+  feta:{u:100,kcal:260,p:14,c:1.5,f:22},
+  redleic:{u:100,kcal:407,p:25,c:0.3,f:32.3},
+  mateys:{u:100,kcal:390,p:7,c:83,f:3.5},
+  beefxp:{u:100,kcal:380,p:90.7,c:2.3,f:1.7},
+  malto:{u:100,kcal:380,p:0,c:95,f:0},
+  cashew:{u:100,kcal:600,p:18,c:30,f:47.7},
+  almond:{u:100,kcal:620,p:21,c:8.3,f:53.3},
+  baconmayo:{u:100,kcal:461,p:1.5,c:5,f:48},
+  babybel:{unit:'x',kcal:42,p:6.8,c:0.5,f:1.4},
+  wrap:{unit:'x',kcal:179,p:9.8,c:30,f:2.3},
+  bagel:{unit:'x',kcal:232,p:8,c:46,f:2},
+};
+
+/* ---- four day templates: High/Low × Rest/Workout ---- */
+const T = {
+  highRest:{type:'high',blurb:'Your high day. Carbs land ~255g — the Beef-XP + maltodextrin shake does the heavy lifting. Greek yogurt before bed.',meals:[
+    {n:'Breakfast',time:'7–8am',dish:'Surreal & milk',items:[['surreal',50,'Surreal high-protein cereal'],['milk',200,'Lactose-free milk · on cereal']]},
+    {n:'Lunch',time:'12–1pm',dish:'Beef, feta & cheese wrap (cold)',items:[['wrap',1,'High-protein wrap'],['mince5',150,'5% beef mince · batch-cooked'],['feta',20,'Feta, crumbled in'],['redleic',15,'Red Leicester, grated']]},
+    {n:'Snack',time:'3–4pm',dish:'Mateys cereal',items:[['mateys',60,'Marshmallow Mateys'],['milk',125,'Lactose-free milk · on cereal']]},
+    {n:'Carb shake',time:'4–5pm',dish:'Beef-XP + maltodextrin',items:[['beefxp',30,'Beef-XP · 1 scoop'],['malto',95,'Maltodextrin · in the shake']]},
+    {n:'Dinner',time:'6–7pm',dish:'Sloppy-joe bagel',items:[['mince5',250,'5% beef mince'],['bagel',1,'Cinnamon & raisin bagel · toasted'],['redleic',20,'Red Leicester, grated & melted']]},
+    {n:'Evening',time:'8–9pm',dish:'Greek yogurt',items:[['yogurt',150,'Greek 0% yogurt']]},
+  ]},
+  highWO:{type:'high',blurb:'High day around training — the maltodextrin + Beef-XP shake and bagel hit post-workout for glycogen, fat kept away from the session.',meals:[
+    {n:'Breakfast',time:'7am',dish:'Surreal & milk',items:[['surreal',50,'Surreal high-protein cereal'],['milk',200,'Lactose-free milk · on cereal']]},
+    {n:'Lunch',time:'12–1pm',dish:'Beef, feta & cheese wrap (cold)',items:[['wrap',1,'High-protein wrap'],['mince5',150,'5% beef mince · batch-cooked'],['feta',20,'Feta, crumbled in'],['redleic',15,'Red Leicester, grated']]},
+    {n:'Pre-workout',time:'~3:30pm',dish:'Mateys cereal',wo:1,items:[['mateys',60,'Marshmallow Mateys · fast carbs'],['milk',125,'Lactose-free milk · on cereal']]},
+    {n:'Post-workout',time:'~5:45pm',dish:'Beef-XP + malto + bagel',wo:1,items:[['beefxp',30,'Beef-XP · fast protein'],['malto',95,'Maltodextrin · fast carbs in the shake'],['bagel',1,'Cinnamon & raisin bagel · fast carbs']]},
+    {n:'Dinner',time:'~7pm',dish:'Beef & cheese',items:[['mince5',250,'5% beef mince'],['redleic',20,'Red Leicester, grated & melted']]},
+    {n:'Evening',time:'9pm',dish:'Greek yogurt',items:[['yogurt',150,'Greek 0% yogurt']]},
+  ]},
+  lowRest:{type:'low',blurb:'Low day, mince once (cost). Beef-XP, Babybel, feta and nuts carry the rest. Greek yogurt before bed.',meals:[
+    {n:'Breakfast',time:'7–8am',dish:'Surreal & milk + shake',items:[['surreal',50,'Surreal high-protein cereal'],['milk',200,'Lactose-free milk · on cereal'],['beefxp',20,'Beef-XP · stirred in (⅔ scoop)']]},
+    {n:'Lunch',time:'12–1pm',dish:'Babybel, feta & almond plate + shake',items:[['beefxp',30,'Beef-XP · 1 scoop, in water'],['babybel',1,'Babybel Light'],['feta',20,'Feta, crumbled'],['almond',18,'Almonds']]},
+    {n:'Snack',time:'3–4pm',dish:'Babybel & cashews',items:[['babybel',2,'Babybel Light'],['cashew',15,'Cashews']]},
+    {n:'Dinner',time:'6–7pm',dish:'Beef & cheese wrap',items:[['mince5',220,'5% beef mince'],['redleic',25,'Red Leicester, grated & melted'],['baconmayo',10,'Bacon mayo'],['wrap',1,'High-protein wrap']]},
+    {n:'Evening',time:'8–9pm',dish:'Greek yogurt',items:[['yogurt',150,'Greek 0% yogurt']]},
+  ]},
+  lowWO:{type:'low',blurb:'Low day around training — mince once. The wrap (your only real carbs) goes pre-workout to fuel the session.',meals:[
+    {n:'Breakfast',time:'7am',dish:'Surreal & milk + shake',items:[['surreal',50,'Surreal high-protein cereal'],['milk',200,'Lactose-free milk · on cereal'],['beefxp',20,'Beef-XP · stirred in (⅔ scoop)']]},
+    {n:'Lunch',time:'12–1pm',dish:'Babybel, feta & almond plate + shake',items:[['beefxp',30,'Beef-XP · 1 scoop, in water'],['babybel',1,'Babybel Light'],['feta',20,'Feta, crumbled'],['almond',18,'Almonds']]},
+    {n:'Pre-workout',time:'~3:30pm',dish:'Wrap & Babybel',wo:1,items:[['wrap',1,'High-protein wrap · your carbs, pre-session'],['babybel',2,'Babybel Light']]},
+    {n:'Post-workout',time:'~6pm',dish:'Beef & cheese — your dinner',wo:1,items:[['mince5',220,'5% beef mince'],['redleic',25,'Red Leicester, grated & melted'],['baconmayo',10,'Bacon mayo'],['cashew',15,'Cashews']]},
+    {n:'Evening',time:'9pm',dish:'Greek yogurt',items:[['yogurt',150,'Greek 0% yogurt']]},
+  ]},
+};
+
+const DAYS = [
+  {day:'Monday',ab:'MON'},{day:'Tuesday',ab:'TUE'},{day:'Wednesday',ab:'WED'},
+  {day:'Thursday',ab:'THU'},{day:'Friday',ab:'FRI'},{day:'Saturday',ab:'SAT'},{day:'Sunday',ab:'SUN'},
+];
+
+/* ---- state (your schedule: High Mon/Thu; lift Mon,Tue,Thu,Fri) ---- */
+const BASE_LB = 200;
+let weight = 200, calAdj = 0;
+let dayTypes    = ['high','low','low','high','low','low','low'];
+let daySessions = ['workout','workout','rest','workout','workout','rest','rest'];
+let active = (()=>{ const g=new Date().getDay(); return g===0?6:g-1; })();
+let view = 'day';
+const open = new Set(), checked = new Set();
+
+/* ---- save settings to this browser (persists once the page is hosted) ---- */
+const STORE_KEY='carbCyclingWeek.v1';
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({weight,calAdj,dayTypes,daySessions})); }catch(e){}
+}
+(function loadState(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY); if(!raw) return;
+    const o=JSON.parse(raw);
+    if(typeof o.weight==='number') weight=o.weight;
+    if(typeof o.calAdj==='number') calAdj=o.calAdj;
+    if(Array.isArray(o.dayTypes)&&o.dayTypes.length===7) dayTypes=o.dayTypes.slice();
+    if(Array.isArray(o.daySessions)&&o.daySessions.length===7) daySessions=o.daySessions.slice();
+  }catch(e){}
+})();
+
+const k = ()=> weight/BASE_LB;
+const adjMult = ()=> 1 + (calAdj/10);
+const r5 = x => Math.round(x/5)*5;
+const rHalf = x => Math.round(x*2)/2;
+const fmt = n => Math.round(n).toLocaleString('en-GB');
+
+function resolve(idx){
+  const c=dayTypes[idx], s=daySessions[idx];
+  return {key:(c==='high'?'high':'low')+(s==='workout'?'WO':'Rest'), carb:c, session:s};
+}
+function im(food, qty){
+  const d=F[food], s=k();
+  if(d.unit==='x'){ const n=qty*s; return {kcal:d.kcal*n,p:d.p*n,c:d.c*n,f:d.f*n,qtyN:n,unit:'x'}; }
+  const g=qty*s, fac=g/100;
+  return {kcal:d.kcal*fac,p:d.p*fac,c:d.c*fac,f:d.f*fac,qtyN:g,unit:d.unit||'g'};
+}
+function mealTotal(meal){const t={kcal:0,p:0,c:0,f:0};meal.items.forEach(([fo,q])=>{const m=im(fo,q);t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.f+=m.f;});return t;}
+function dayTotal(idx){const t={kcal:0,p:0,c:0,f:0};T[resolve(idx).key].meals.forEach(me=>{const m=mealTotal(me);t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.f+=m.f;});return t;}
+function weekAvg(){let kc=0,p=0;DAYS.forEach((_,i)=>{const d=dayTotal(i);kc+=d.kcal;p+=d.p;});return{kcal:kc/7,p:p/7};}
+function counts(){const hi=dayTypes.filter(t=>t==='high').length, wo=daySessions.filter(s=>s==='workout').length;return{hi,lo:7-hi,wo};}
+function maxCarb(){let m=0;DAYS.forEach((_,i)=>{m=Math.max(m,dayTotal(i).c);});return m||1;}
+function qtyLabel(m){ if(m.unit==='x') return `&times; ${rHalf(m.qtyN)}`; return `${r5(m.qtyN)}${m.unit}`; }
+
+/* ---- render ---- */
+function renderMeta(){const c=counts();document.getElementById('wkMeta').innerHTML=`<b>${c.hi}</b> high · <b>${c.lo}</b> low<br><b>${c.wo}</b> train · <b>${7-c.wo}</b> rest`;}
+function renderScaleSub(){
+  const a=weekAvg(), kg=Math.round(weight/2.2046);
+  document.getElementById('scaleSub').innerHTML=`${kg} kg · week avg <b>${fmt(a.kcal*adjMult())}</b> kcal · <b>${(a.p*adjMult()/(weight/2.2046)).toFixed(1)}</b> g/kg protein`;
+}
+function renderCalAdjSub(){
+  const pct=calAdj*10, sign=pct>0?'+':'', label=pct===0?'Baseline':`${sign}${pct}%`;
+  document.getElementById('calAdjVal').innerHTML=`${label}<span></span>`;
+  document.getElementById('calAdjSub').innerHTML = pct===0 ? 'plan as written' : (pct<0?'deeper deficit':'more food / closer to your targets');
+}
+function renderTabs(){
+  const el=document.getElementById('tabs'); el.innerHTML=''; const mc=maxCarb();
+  DAYS.forEach((w,i)=>{
+    const t=dayTypes[i], wo=daySessions[i]==='workout', d=dayTotal(i), h=6+Math.round((d.c/mc)*12);
+    const b=document.createElement('button');
+    b.className=`tab ${t}${wo?' wo':''}${view==='day'&&i===active?' on':''}`;
+    b.innerHTML=`<span class="d">${w.ab}</span><span class="wave"><i style="height:${h}px"></i></span><span class="wkdot"></span>`;
+    b.setAttribute('aria-label',`${w.day}, ${t} ${wo?'workout':'rest'} day`);
+    b.onclick=()=>{view='day';active=i;render();};
+    el.appendChild(b);
+  });
+  [['shop','Shop'],['guide','Guide']].forEach(([v,lab])=>{
+    const b=document.createElement('button'); b.className=`tab util${view===v?' on':''}`; b.textContent=lab;
+    b.onclick=()=>{view=v;render();}; el.appendChild(b);
+  });
+}
+
+function renderDay(){
+  const w=DAYS[active], r=resolve(active), tpl=T[r.key], t=r.carb, wo=r.session==='workout', d=dayTotal(active), M=adjMult();
+  const pc=d.p*4, cc=d.c*4, fc=d.f*9, tot=pc+cc+fc||1;
+  const meals=tpl.meals.map(me=>{
+    const key=`${r.key}-${me.n}`, isOpen=open.has(key), mt=mealTotal(me);
+    const items=me.items.map(([fo,q,lab])=>{
+      const m=im(fo,q);
+      return `<div class="item ${t}"><div class="il"><div class="iname">${lab}</div><div class="iqty">${qtyLabel(m)}</div></div>
+        <div class="im"><b>${fmt(m.kcal*M)}</b> kcal<br>P${Math.round(m.p*M)} C${Math.round(m.c*M)} F${Math.round(m.f*M)}</div></div>`;
+    }).join('');
+    return `<div class="meal ${isOpen?'open':''} ${me.wo?'wo':''}"><button data-key="${key}" aria-expanded="${isOpen}">
+        <span class="nm">${me.n}<span class="time">${me.time}</span>${me.wo?'<span class="wob">WO</span>':''}<span class="dish">${me.dish}</span></span>
+        <span class="pcf"><span class="dp">P${Math.round(mt.p*M)}</span><span class="dc">C${Math.round(mt.c*M)}</span><span class="df">F${Math.round(mt.f*M)}</span></span>
+        <span class="mk">${fmt(mt.kcal*M)}</span><span class="chev"></span></button>
+      <div class="body">${items}</div></div>`;
+  }).join('');
+  const allOpen=tpl.meals.every(me=>open.has(`${r.key}-${me.n}`));
+
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead"><div class="dn">${w.day}</div>
+      <div class="daytoggles">
+        <div class="seg" role="group" aria-label="Carb day">
+          <button class="${t==='low'?'on low':''}" data-carb="low">Low</button>
+          <button class="${t==='high'?'on high':''}" data-carb="high">High</button>
+        </div>
+        <div class="seg" role="group" aria-label="Training">
+          <button class="${!wo?'on rest':''}" data-sess="rest">Rest</button>
+          <button class="${wo?'on gym':''}" data-sess="workout">Workout</button>
+        </div>
+      </div>
+    </div>
+    <section class="hero ${t}"><div class="edge"></div>
+      <div class="tags"><span class="htag ${t}">${t==='high'?'High carb':'Low carb'}</span><span class="htag ${wo?'gym':'rest'}">${wo?'Workout':'Rest'} day</span></div>
+      <p class="blurb">${tpl.blurb}</p>
+      <div class="kcal"><span class="big">${fmt(d.kcal*M)}</span><span class="unit">kcal</span></div>
+      <div class="splitbar"><i class="sp" style="width:${pc/tot*100}%"></i><i class="sc" style="width:${cc/tot*100}%"></i><i class="sf" style="width:${fc/tot*100}%"></i></div>
+      <div class="legend">
+        <div class="leg p"><div class="k"><em></em>Protein</div><div class="g">${Math.round(d.p*M)}<small>g</small></div></div>
+        <div class="leg c"><div class="k"><em></em>Carbs</div><div class="g">${Math.round(d.c*M)}<small>g</small></div></div>
+        <div class="leg f"><div class="k"><em></em>Fat</div><div class="g">${Math.round(d.f*M)}<small>g</small></div></div>
+      </div>
+    </section>
+    <div class="mealctl"><span class="h">${wo?'Meals · around training':'Meals'}</span><button class="toggleall" id="toggleAll">${allOpen?'Collapse all':'Expand all'}</button></div>
+    ${meals}
+   </div>`;
+
+  document.querySelectorAll('[data-carb]').forEach(b=>{b.onclick=()=>{dayTypes[active]=b.dataset.carb;saveState();render();};});
+  document.querySelectorAll('[data-sess]').forEach(b=>{b.onclick=()=>{daySessions[active]=b.dataset.sess;saveState();render();};});
+  document.querySelectorAll('.meal > button').forEach(b=>{b.onclick=()=>{const key=b.dataset.key;open.has(key)?open.delete(key):open.add(key);renderDay();};});
+  document.getElementById('toggleAll').onclick=()=>{
+    if(allOpen) tpl.meals.forEach(me=>open.delete(`${r.key}-${me.n}`)); else tpl.meals.forEach(me=>open.add(`${r.key}-${me.n}`));
+    renderDay();
+  };
+}
+
+const SHOP_LABEL={mince5:'Lean 5% beef mince',beefxp:'Beef-XP protein',malto:'Maltodextrin powder',surreal:'Surreal protein cereal',yogurt:'Greek 0% yogurt',milk:'Lactose-free milk',
+  feta:'Feta cheese',redleic:'Red Leicester (grated)',mateys:'Marshmallow Mateys',
+  babybel:'Babybel Light',almond:'Almonds',cashew:'Cashews',baconmayo:'Bacon mayo',wrap:'High-protein wraps',bagel:'Cinnamon & raisin bagels'};
+const SHOP_ORDER=['mince5','beefxp','malto','surreal','yogurt','milk','wrap','bagel','feta','redleic','mateys','babybel','almond','cashew','baconmayo'];
+
+function weeklyTally(){
+  const acc={};
+  DAYS.forEach((_,i)=>{ T[resolve(i).key].meals.forEach(me=>me.items.forEach(([fo,q])=>{
+    if(!acc[fo]) acc[fo]={unit:F[fo].unit==='x'?'x':(F[fo].unit||'g'),q:0};
+    acc[fo].q+=q;
+  })); });
+  return acc;
+}
+function renderShop(){
+  const a=weeklyTally(), s=k(), c=counts();
+  const rows=SHOP_ORDER.map(fo=>{
+    const it=a[fo]; if(!it) return '';
+    const q=it.q*s; let disp;
+    if(fo==='beefxp') disp=`${Math.round(q/30)} scoops`;
+    else if(it.unit==='x') disp=`${Math.round(q)} pcs`;
+    else if(it.unit==='ml') disp=q>=1000?`${(q/1000).toFixed(1)} L`:`${r5(q)} ml`;
+    else disp=q>=1000?`${(q/1000).toFixed(2)} kg`:`${r5(q)} g`;
+    return `<label class="shoprow ${checked.has(fo)?'done':''}"><input type="checkbox" data-fo="${fo}" ${checked.has(fo)?'checked':''}>
+      <span class="sn">${SHOP_LABEL[fo]}</span><span class="sq">${disp}</span></label>`;
+  }).join('');
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead" style="margin-bottom:8px"><div class="dn">Shopping</div></div>
+    <section class="sheet">
+      <div class="note">Totals for your current week — <b>${c.hi} high</b> / <b>${c.lo} low</b>, <b>${c.wo} training</b> days — scaled to <b>${weight} lb</b>. Beef-XP as scoops (30g each; 1.8kg tub = 60). Updates as you flip days.</div>
+      ${rows}
+    </section>
+   </div>`;
+  document.querySelectorAll('.shoprow input').forEach(ch=>{ch.onchange=()=>{const fo=ch.dataset.fo;ch.checked?checked.add(fo):checked.delete(fo);ch.closest('.shoprow').classList.toggle('done',ch.checked);};});
+}
+
+function renderGuide(){
+  document.getElementById('main').innerHTML=`
+   <div class="reveal">
+    <div class="dayhead" style="margin-bottom:8px"><div class="dn">Guide</div></div>
+    <div class="gcard gymc"><h3><em>DAYS</em>Four day types</h3>
+      <p>Every day toggles two things: <b>Low / High</b> carbs and <b>Rest / Workout</b>. That gives four versions. Default schedule: <b>High on Mon &amp; Thu</b>, training <b>Mon, Tue, Thu, Fri</b> — flip any day to match your week. The strip recolours and shows a green dot on training days.</p></div>
+    <div class="gcard gymc"><h3><em>TRAIN</em>Pre &amp; post-workout</h3>
+      <p>Workout days hold the <b>same daily totals</b> as rest days — the food is just re-timed around the session. <b>Pre-workout</b> = fast carbs (Mateys on high, the wrap on low) + protein, low fat. <b>Post-workout</b> = Beef-XP (hydrolysed = fast) + a high-GI carb (maltodextrin + bagel on high days), near-zero fat.</p>
+      <p>Times assume an <b>after-work session ~5pm</b>. Train at a different time? Slide the pre/post meals to wrap around whenever you actually lift — the macros are what matter.</p></div>
+    <div class="gcard info"><h3><em>BASIS</em>Your numbers</h3>
+      <p>This is your plan. High days land ~<b>2,290 kcal · 255g carbs</b> (your "at least 250g"), low days ~<b>1,570 kcal</b>. Week avg ~<b>1,775 kcal</b>, around <b>0.95 lb/week</b>. Protein ~2.0–2.1 g/kg every day — lands almost exactly on your 2,400 / 1,650 headers.</p></div>
+    <div class="gcard gymc"><h3><em>CARBS</em>The maltodextrin shake</h3>
+      <p>High days hit their carb target through a <b>Beef-XP + maltodextrin shake</b> (~95g malto ≈ 90g fast carbs). On <b>workout</b> days it's your <b>post-workout shake</b> — paired with a bagel, it dumps ~135g fast carbs in when glycogen's emptiest. On rest days it's just an afternoon carb shake.</p>
+      <p>Maltodextrin's nearly tasteless and dissolves clear — stir it straight into the Beef-XP.</p></div>
+    <div class="gcard info"><h3><em>SWAPS</em>Cereal, cheese, yogurt</h3>
+      <p><b>Surreal</b> is the breakfast cereal — 39g protein/100g, but most of its carbs are fibre and sweetener, so the real fuel carbs come from the malto shake. <b>Babybel Light</b> and <b>feta</b> (folded into plates, never standalone) cover the cold-snack cheese. <b>Greek yogurt</b> now appears <b>once a day</b>, in the evening — slow casein before bed without the repetition.</p></div>
+    <div class="gcard info"><h3><em>COST</em>Mince cut on low days</h3>
+      <p>Low-day mince is <b>once a day (~220g)</b>, down from ~460g — a real cut to your fresh-meat shop. The protein gap is filled by <b>Beef-XP, Surreal and the Babybel/feta plate</b>; <b>nuts and bacon mayo</b> cover the fat that mince used to bring.</p></div>
+    <div class="gcard info"><h3><em>NIGHT</em>Casein before bed</h3>
+      <p>150g Greek yogurt every night, both day types — slow protein to keep muscle protein synthesis ticking overnight.</p></div>
+    <div class="gcard warn"><h3><em>FIX</em>Add vegetables</h3>
+      <p>The one real gap: <b>micronutrients</b>. This list is meat, dairy and refined carbs, so it's light on vitamins and fibre. Best fix isn't a swap — it's adding <b>non-starchy veg</b> (spinach, peppers, onion, frozen mixed veg) into the wraps and beef dinners. ~20–35 kcal per 100g, so it barely touches the totals but does the real work.</p></div>
+    <div class="gcard warn"><h3><em>WATCH</em>Salt &amp; water</h3>
+      <p>Cheese, mince, bacon mayo and Beef-XP all add salt — fine if your BP's normal, just don't pile more on. Push water, especially on low days.</p></div>
+    <div class="gcard info"><h3><em>DIAL</em>The two sliders</h3>
+      <p><b>Bodyweight</b> scales every portion from 200 lb — drop it as you lean down. <b>Calorie target</b> shifts the whole plan &plusmn;30%. Protein stays ~2 g/kg either way.</p></div>
+   </div>`;
+}
+
+function render(){
+  renderTabs(); renderMeta(); renderScaleSub(); renderCalAdjSub();
+  if(view==='day') renderDay(); else if(view==='shop') renderShop(); else renderGuide();
+}
+
+/* ---- events ---- */
+const wtInput=document.getElementById('wt'), wtVal=document.getElementById('wtVal');
+wtInput.addEventListener('input',()=>{
+  weight=+wtInput.value; wtVal.innerHTML=`${weight}<span> lb</span>`;
+  renderScaleSub(); if(view==='day') renderDay(); else if(view==='shop') renderShop();
+  const mc=maxCarb();
+  document.querySelectorAll('#tabs .tab').forEach((b,i)=>{ if(i<DAYS.length){const bar=b.querySelector('.wave i'); if(bar) bar.style.height=(6+Math.round((dayTotal(i).c/mc)*12))+'px';}});
+  saveState();
+});
+const calAdjInput=document.getElementById('calAdj');
+calAdjInput.addEventListener('input',()=>{calAdj=+calAdjInput.value;renderCalAdjSub();renderScaleSub();if(view==='day') renderDay(); else if(view==='shop') renderShop();saveState();});
+
+/* reflect any saved bodyweight / calorie setting on the sliders before first paint */
+wtInput.value=weight; wtVal.innerHTML=`${weight}<span> lb</span>`;
+calAdjInput.value=calAdj;
+render();
+</script>
+</body>
+</html>
