@@ -303,7 +303,7 @@ let st={
  phase:'cut', structure:'cycle', weight:200, calAdj:0, wtUnit:'lb',
  dayTypes:['high','low','low','high','low','low','low'],
  daySessions:['workout','workout','rest','workout','workout','rest','rest'],
- picks:{}, customFoods:[]
+ picks:{}, customFoods:[], updatedAt:0
 };
 (function load(){ try{ const r=localStorage.getItem(KEY); if(!r)return; const o=JSON.parse(r);
  if(o.phase) st.phase=o.phase; if(o.structure) st.structure=o.structure;
@@ -311,12 +311,42 @@ let st={
  if(Array.isArray(o.dayTypes)&&o.dayTypes.length===7) st.dayTypes=o.dayTypes.slice();
  if(Array.isArray(o.daySessions)&&o.daySessions.length===7) st.daySessions=o.daySessions.slice();
  if(o.picks&&typeof o.picks==='object') st.picks=o.picks;
- if(Array.isArray(o.customFoods)) st.customFoods=o.customFoods;
+ if(Array.isArray(o.customFoods)) st.customFoods=o.customFoods; if(typeof o.updatedAt==='number') st.updatedAt=o.updatedAt;
  }catch(e){} })();
 if(st.calAdj%5!==0) st.calAdj=st.calAdj*10;
 st.calAdj=Math.max(-50,Math.min(50,st.calAdj));
 CUSTOM=st.customFoods||[]; rebuildFood();
-function save(){ st.customFoods=CUSTOM; try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
+function persist(){ st.customFoods=CUSTOM; try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
+function save(){ st.updatedAt=Date.now(); persist(); queuePush(); }
+/* ---- cloud sync (optional; off until SB_URL + SB_KEY are filled in) ---- */
+const SB_URL='https://pnolewmbtiiadtyapeul.supabase.co'; // paste your Supabase Project URL here, e.g. https://abcd.supabase.co
+const SB_KEY='sb_publishable_MRxPL8nJ4vHQgK8GqsbIjw_tp1F_ES-'; // paste your Supabase publishable key here, e.g. sb_publishable_xxx
+const SYNC_KEY='mealPlannerSyncCode';
+let syncCode=''; try{ syncCode=localStorage.getItem(SYNC_KEY)||''; }catch(e){}
+let syncStatus='', syncTimer=null;
+function syncOn(){ return !!(SB_URL && SB_KEY && syncCode); }
+function sbH(extra){ return Object.assign({apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}, extra||{}); }
+async function pullCloud(){ if(!syncOn())return null; try{ const r=await fetch(SB_URL+'/rest/v1/planner_saves?code=eq.'+encodeURIComponent(syncCode)+'&select=data,updated_at',{headers:sbH()}); if(!r.ok)return null; const rows=await r.json(); return (rows&&rows[0])||null; }catch(e){ return null; } }
+async function pushCloud(){ if(!syncOn())return false; try{ const r=await fetch(SB_URL+'/rest/v1/planner_saves',{method:'POST',headers:sbH({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({code:syncCode,data:st,updated_at:new Date(st.updatedAt||Date.now()).toISOString()})}); return r.ok; }catch(e){ return false; } }
+function queuePush(){ if(!syncOn())return; clearTimeout(syncTimer); syncTimer=setTimeout(function(){ pushCloud(); },1500); }
+function applyCloud(o){ if(!o)return;
+ if(o.phase)st.phase=o.phase; if(o.structure)st.structure=o.structure;
+ if(typeof o.weight==='number')st.weight=o.weight; if(typeof o.calAdj==='number')st.calAdj=o.calAdj;
+ if(o.wtUnit==='kg'||o.wtUnit==='lb')st.wtUnit=o.wtUnit;
+ if(Array.isArray(o.dayTypes)&&o.dayTypes.length===7)st.dayTypes=o.dayTypes.slice();
+ if(Array.isArray(o.daySessions)&&o.daySessions.length===7)st.daySessions=o.daySessions.slice();
+ if(o.picks&&typeof o.picks==='object')st.picks=o.picks;
+ if(Array.isArray(o.customFoods)){ st.customFoods=o.customFoods; CUSTOM=o.customFoods; }
+ if(typeof o.updatedAt==='number')st.updatedAt=o.updatedAt;
+ rebuildFood(); persist();
+}
+function refreshControls(){ if(typeof setWtSlider==='function')setWtSlider(); var c=document.getElementById('cal'); if(c){ c.value=st.calAdj; var cv=document.getElementById('calVal'); if(cv)cv.innerHTML=(st.calAdj>0?'+':'')+st.calAdj+'<span> %</span>'; } if(typeof setPhaseUI==='function')setPhaseUI(); if(typeof setStructUI==='function')setStructUI(); }
+async function syncInit(){ if(!syncOn())return; syncStatus='Syncing\u2026'; if(view==='foods')renderFoods();
+ const row=await pullCloud();
+ if(row&&row.data){ const cu=(row.data.updatedAt)||0, lu=(st.updatedAt)||0; if(cu>=lu){ applyCloud(row.data); refreshControls(); } else { pushCloud(); } }
+ else { pushCloud(); }
+ syncStatus='Synced \u2713'; render();
+}
 
 let active=(()=>{const g=new Date().getDay();return g===0?6:g-1;})();
 let view='day', foodEditId=null;
@@ -480,7 +510,16 @@ function renderFoods(){
  const bk='<section class="sheet"><div class="frmttl" style="font-size:13px;margin-bottom:8px">Backup &amp; restore</div><div class="note">Custom foods live in this browser only. Copy this text somewhere safe to back them up, or paste a backup in and restore.</div><div class="bkrow"><textarea id="bk_txt">'+esc(JSON.stringify(CUSTOM))+'</textarea><div class="fbtns"><button class="save" id="bk_copy" style="background:var(--low)">Copy</button><button class="cancel" id="bk_load">Restore</button></div></div></section>';
 
  const repoSec = REPO.length? '<section class="sheet"><div class="frmttl" style="font-size:13px;margin-bottom:8px">From GitHub <span class="ed" style="color:var(--low)">foods.json</span></div><div class="note">These load from your <b>foods.json</b> on GitHub and appear on every device. Edit them there, not here.</div>'+REPO.map(f=>'<div class="clrow"><div class="ci"><div class="cn">'+esc(f.name)+' <span class="ctag '+f.cat+'">'+f.cat+'</span></div><div class="cm">'+macLine(f)+'</div></div></div>').join('')+'</section>':'';
- document.getElementById('main').innerHTML='<div class="reveal"><div class="dayhd" style="margin-bottom:8px"><div class="dn">Foods</div></div>'+form+mine+repoSec+ref+bk+'</div>';
+  var sync;
+ if(!SB_URL||!SB_KEY){ sync='<section class="sheet"><div class="frmttl" style="font-size:13px;margin-bottom:8px">Sync across devices</div><div class="note">Off right now. To share your plan between your phone and PC, set up a free Supabase project (steps are in the chat), paste your two keys into the top of the HTML, and a sync-code box appears here.</div></section>'; }
+ else { var stat = syncCode? ('Connected as <b>'+esc(syncCode)+'</b>'+(syncStatus?(' \u00b7 '+syncStatus):'')) : 'Enter a code to connect.';
+   sync='<section class="sheet"><div class="frmttl" style="font-size:13px;margin-bottom:8px">Sync across devices</div>'
+   +'<div class="note">Type the <b>same sync code</b> on every device to share your plan. Treat it like a password \u2014 anyone with it can see and change your settings. '+stat+'</div>'
+   +'<div class="field"><input id="sync_code" type="text" autocapitalize="off" autocorrect="off" value="'+esc(syncCode)+'" placeholder="a code only you know, e.g. josh-9f3kq2"></div>'
+   +'<div class="fbtns"><button class="save" id="sync_connect">'+(syncCode?'Update':'Connect')+'</button><button class="cancel" id="sync_gen">Generate</button></div>'
+   +(syncCode?'<div class="fbtns" style="margin-top:8px"><button class="save" id="sync_pull" style="background:var(--low)">Pull from cloud</button><button class="cancel" id="sync_push">Push now</button></div>':'')
+   +'</section>'; }
+ document.getElementById('main').innerHTML='<div class="reveal"><div class="dayhd" style="margin-bottom:8px"><div class="dn">Foods</div></div>'+form+sync+mine+repoSec+ref+bk+'</div>';
 
  // form handlers
  document.querySelectorAll('#f_cat button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#f_cat button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
@@ -491,6 +530,11 @@ function renderFoods(){
  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ const f=CUSTOM.find(x=>x.id===b.dataset.del); if(f&&confirm('Delete "'+f.name+'"?')){ CUSTOM=CUSTOM.filter(x=>x.id!==b.dataset.del); if(foodEditId===b.dataset.del)foodEditId=null; save();rebuildFood();renderFoods();renderTabs(); } });
  document.getElementById('bk_copy').onclick=()=>{ const t=document.getElementById('bk_txt'); t.select(); try{navigator.clipboard.writeText(t.value);}catch(e){} document.execCommand&&document.execCommand('copy'); };
  document.getElementById('bk_load').onclick=()=>{ try{ const arr=JSON.parse(document.getElementById('bk_txt').value); if(Array.isArray(arr)){ CUSTOM=arr.filter(f=>f&&f.id&&f.cat); save();rebuildFood();foodEditId=null;renderFoods();renderTabs(); } else alert('That is not a valid backup.'); }catch(e){ alert('Could not read that backup text.'); } };
+ var sc=document.getElementById('sync_code');
+ var scn=document.getElementById('sync_connect'); if(scn) scn.onclick=async function(){ syncCode=(sc.value||'').trim(); try{localStorage.setItem(SYNC_KEY,syncCode);}catch(e){} if(syncCode){ await syncInit(); } renderFoods(); };
+ var sg=document.getElementById('sync_gen'); if(sg) sg.onclick=function(){ if(sc) sc.value='mp-'+Math.random().toString(36).slice(2,8); };
+ var spl=document.getElementById('sync_pull'); if(spl) spl.onclick=async function(){ syncStatus='Pulling\u2026'; renderFoods(); var row=await pullCloud(); if(row&&row.data){ applyCloud(row.data); refreshControls(); syncStatus='Pulled \u2713'; } else { syncStatus='Nothing saved under that code yet'; } render(); };
+ var sph=document.getElementById('sync_push'); if(sph) sph.onclick=async function(){ syncStatus='Pushing\u2026'; renderFoods(); st.updatedAt=Date.now(); persist(); var ok=await pushCloud(); syncStatus=ok?'Pushed \u2713':'Push failed \u2014 check your keys'; renderFoods(); };
 }
 function saveFood(){
  const v=id=>document.getElementById(id).value.trim();
@@ -543,6 +587,7 @@ setPhaseUI(); setStructUI(); render();
 /* ---- load shared food list from GitHub (foods.json), if present ---- */
 function normFood(f){ const o={id:String(f.id),name:String(f.name||f.id),cat:f.cat,per:f.per==='unit'?'unit':100,kcal:+f.kcal||0,p:+f.p||0,c:+f.c||0,f:+f.f||0,cost:f.cost||2,repo:true}; if(o.per==='unit')o.unitName=f.unitName||'item'; if(f.cooked)o.cooked=f.cooked; if(f.dry)o.dry=1; if(f.frozen)o.frozen=1; if(f.half)o.half=1; return o; }
 fetch('./foods.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(arr=>{ if(Array.isArray(arr)&&arr.length){ REPO=arr.filter(f=>f&&f.id&&['protein','carb','fat'].indexOf(f.cat)>=0).map(normFood); rebuildFood(); render(); } }).catch(()=>{});
+syncInit();
 </script>
 </body>
 </html>
